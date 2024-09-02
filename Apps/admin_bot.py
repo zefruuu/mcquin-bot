@@ -3,7 +3,7 @@ from telebot import TeleBot
 from Tokens import admin_tok
 
 TOKEN = admin_tok.key
-PASSWORD = '0921'  # set your password here
+PASSWORD = '0922'  # set your password here
 
 bot = TeleBot(TOKEN)
 #

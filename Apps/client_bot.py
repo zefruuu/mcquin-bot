@@ -50,7 +50,7 @@ def update_user_balance(user_id, amount):
 def show_balance(message):
     user_id = message.from_user.id
     balance = get_user_balance(user_id)
-    bot.send_message(message.chat.id, f'Ваш баланс: {balance} монеток🪙')
+    bot.send_message(message.chat.id, f'Ваш баланс: {balance} монеток')
 
 # Команда для получения картинки
 @bot.message_handler(commands=['get_image'])
