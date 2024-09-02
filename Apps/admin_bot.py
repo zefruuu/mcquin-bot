@@ -44,6 +44,7 @@ def start(message):
 
 def check_password(message):
     if message.text == PASSWORD:
+        bot.send_message(message.chat.id, 'done!')
         users[message.from_user.id] = True
         help(message)
     else:
@@ -107,6 +108,9 @@ def delete_photo(message):
         bot.send_message(message.chat.id, 'You need to enter the password first')
 
 def process_update_photo(message):
+    if message.text == '/cancel':
+        cancel(message)
+        return
     try:
         photo_id = int(message.text)
         bot.send_message(message.chat.id, 'Send the new photo to update')
@@ -149,6 +153,9 @@ def show_photo(message):
         bot.send_message(message.chat.id, 'You need to enter the password first')
 
 def process_show_photo(message):
+    if message.text == '/cancel':
+        cancel(message)
+        return
     try:
         photo_id = int(message.text)
         conn = sqlite3.connect('image_database.db')
@@ -161,5 +168,10 @@ def process_show_photo(message):
         bot.send_message(message.chat.id, 'Invalid ID')
     except TypeError:
         bot.send_message(message.chat.id, 'Photo not found')
+
+@bot.message_handler(commands=['cancel'])
+def cancel(message):
+    bot.send_message(message.chat.id, 'Operation cancelled')
+    return bot.clear_step_handler(message)
 
 bot.infinity_polling()
