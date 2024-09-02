@@ -62,6 +62,8 @@ Available commands:
 /deleteAllPhotos - Delete all photos in the database
 /showPhoto - Show a photo by ID
 /help - Show this help message
+                         
+/cancel - for cancel
 ''')
     else:
         bot.send_message(message.chat.id, 'You need to enter the password first')
