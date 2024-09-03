@@ -149,7 +149,7 @@ def delete_all_photos(message):
 @bot.message_handler(commands=['showPhoto'])
 def show_photo(message):
     if message.from_user.id in users:
-        bot.send_message(message.chat.id, 'Send the ID of the photo to show')
+        bot.send_message(message.chat.id, 'Send the ID of the photo to show please')
         bot.register_next_step_handler(message, process_show_photo)
     else:
         bot.send_message(message.chat.id, 'You need to enter the password first')
