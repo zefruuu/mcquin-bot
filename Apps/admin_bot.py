@@ -129,7 +129,7 @@ def process_update_photo_with_image(message, photo_id):
         cursor.execute('UPDATE images SET image = ? WHERE id = ?', (image_bytes, photo_id))
         conn.commit()
         conn.close()
-        bot.send_message(message.chat.id, f'Photo with ID {photo_id} updated successfully')
+        bot.send_message(message.chat.id, f'Done! Photo with ID {photo_id} updated successfully')
     else:
         bot.send_message(message.chat.id, 'Please send a photo')
 
