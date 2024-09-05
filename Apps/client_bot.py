@@ -2,7 +2,9 @@ import sqlite3
 import random
 from telebot import TeleBot
 from Tokens import client_tok
+
 import threading
+import time
 
 TOKEN = client_tok.key
 bot = TeleBot(TOKEN)
@@ -30,14 +32,13 @@ def get_user_balance(user_id):
     cursor.execute('SELECT balance FROM users WHERE user_id = ?', (user_id,))
     result = cursor.fetchone()
     if result is None:
-        cursor.execute('INSERT INTO users (user_id, balance) VALUES (?, ?)', (user_id, 10))  # Стартовый баланс 10 монет
+        cursor.execute('INSERT INTO users (user_id, balance) VALUES (?, ?)', (user_id, 10)) 
         conn.commit()
         balance = 10
     else:
         balance = result[0]
     conn.close()
     return balance
-
 
 def update_user_balance(user_id, amount):
     conn = sqlite3.connect('user_data.db')
@@ -46,25 +47,44 @@ def update_user_balance(user_id, amount):
     conn.commit()
     conn.close()
 
-
-def add_coin_every_2_hours():
+def add_coin_every_2_hours(stop_timer):
     try:
+        conn = sqlite3.connect('user_data.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT user_id FROM users')
+        users = cursor.fetchall()
+        for user in users:
+            user_id = user[0]
+            balance = get_user_balance(user_id)
+            if balance < 100:
+                update_user_balance(user_id, 1)
+                print(f"+ 1 social credit💳 for {user_id}")
+            else:
+                print(f"долбойоб 🐖👉 {user_id} ")
+                stop_timer.set()
+        conn.close()
+    except ValueError:
+        print('error')
+
+def run_add_coin(stop_timer):
+    while True:
+        if not stop_timer.is_set():
+            add_coin_every_2_hours(stop_timer)
+            time.sleep(100) #тайм кароч
+        else:
             conn = sqlite3.connect('user_data.db')
             cursor = conn.cursor()
-            cursor.execute('SELECT user_id FROM users')
+            cursor.execute('SELECT user_id FROM users WHERE balance < 100')
             users = cursor.fetchall()
-            for user in users:
-                user_id = user[0]
-            update_user_balance(user_id, 1)
-            print(f"Добавлена 1 монетка пользователю {user_id}")
-            conn.close()    
+            if users:
+                stop_timer.clear()
+            conn.close()
+            time.sleep(5) #тайм кароч якщо чел свинка
 
-
-
-threading.Timer(7200, add_coin_every_2_hours).start()
-
-
-add_coin_every_2_hours()
+stop_timer = threading.Event()
+thread = threading.Thread(target=run_add_coin, args=(stop_timer,))
+thread.daemon = True
+thread.start()
 
 
 @bot.message_handler(commands=['balance'])
