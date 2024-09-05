@@ -1,15 +1,16 @@
 import sqlite3
 import random
 from telebot import TeleBot
-from Tokens import client_tok  # берем доступ до ключа
+from Tokens import client_tok
+import threading
 
 TOKEN = client_tok.key
 bot = TeleBot(TOKEN)
 
-# Словарь для отслеживания количества использований команд
+
 user_command_count = {}
 
-# Инициализация базы данных пользователей
+
 def init_db():
     conn = sqlite3.connect('user_data.db')
     cursor = conn.cursor()
@@ -22,7 +23,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Получение баланса пользователя
+
 def get_user_balance(user_id):
     conn = sqlite3.connect('user_data.db')
     cursor = conn.cursor()
@@ -37,13 +38,33 @@ def get_user_balance(user_id):
     conn.close()
     return balance
 
-# Увеличение или уменьшение баланса пользователя
+
 def update_user_balance(user_id, amount):
     conn = sqlite3.connect('user_data.db')
     cursor = conn.cursor()
     cursor.execute('UPDATE users SET balance = balance + ? WHERE user_id = ?', (amount, user_id))
     conn.commit()
     conn.close()
+
+
+def add_coin_every_2_hours():
+    try:
+            conn = sqlite3.connect('user_data.db')
+            cursor = conn.cursor()
+            cursor.execute('SELECT user_id FROM users')
+            users = cursor.fetchall()
+            for user in users:
+                user_id = user[0]
+            update_user_balance(user_id, 1)
+            print(f"Добавлена 1 монетка пользователю {user_id}")
+            conn.close()    
+
+
+
+threading.Timer(7200, add_coin_every_2_hours).start()
+
+
+add_coin_every_2_hours()
 
 # Команда для отображения баланса пользователя
 @bot.message_handler(commands=['balance'])
@@ -115,10 +136,27 @@ def hellp(message):
 /balance - ваш баланс монеток👛
 /start - перезапуск бота🔄
 /help - все команды▶️"""
+            )
+
+# Команда для добавления монет
+@bot.message_handler(commands=['addmoney'])
+def add_money(message):
+    try:
+        user_id = message.from_user.id
+        amount = int(message.text.split()[1])
+        update_user_balance(user_id, amount)
+
+        new_balance = get_user_balance(user_id)
+        bot.send_message(message.chat.id, f'Монеты добавленны, Люблю илюшу')
+    except (IndexError, ValueError):
+        bot.send_message(message.chat.id, '/addmoney <количество>')
+    except Exception as e:
+        bot.send_message(message.chat.id, f'Произошла ошибка: {e}')
 
 
 
-        )
+
+
 # Инициализация базы данных при старте бота
 init_db()
 
