@@ -44,6 +44,7 @@ def start(message):
 
 def check_password(message):
     if message.text == PASSWORD:
+        bot.send_message(message.chat.id, 'done!')
         users[message.from_user.id] = True
         help(message)
     else:
@@ -61,6 +62,8 @@ Available commands:
 /deleteAllPhotos - Delete all photos in the database
 /showPhoto - Show a photo by ID
 /help - Show this help message
+                         
+/cancel - for cancel
 ''')
     else:
         bot.send_message(message.chat.id, 'You need to enter the password first')
@@ -107,6 +110,9 @@ def delete_photo(message):
         bot.send_message(message.chat.id, 'You need to enter the password first')
 
 def process_update_photo(message):
+    if message.text == '/cancel':
+        cancel(message)
+        return
     try:
         photo_id = int(message.text)
         bot.send_message(message.chat.id, 'Send the new photo to update')
@@ -123,7 +129,7 @@ def process_update_photo_with_image(message, photo_id):
         cursor.execute('UPDATE images SET image = ? WHERE id = ?', (image_bytes, photo_id))
         conn.commit()
         conn.close()
-        bot.send_message(message.chat.id, f'Photo with ID {photo_id} updated successfully')
+        bot.send_message(message.chat.id, f'Done! Photo with ID {photo_id} updated successfully')
     else:
         bot.send_message(message.chat.id, 'Please send a photo')
 
@@ -143,12 +149,15 @@ def delete_all_photos(message):
 @bot.message_handler(commands=['showPhoto'])
 def show_photo(message):
     if message.from_user.id in users:
-        bot.send_message(message.chat.id, 'Send the ID of the photo to show')
+        bot.send_message(message.chat.id, 'Send the ID of the photo to show please')
         bot.register_next_step_handler(message, process_show_photo)
     else:
         bot.send_message(message.chat.id, 'You need to enter the password first')
 
 def process_show_photo(message):
+    if message.text == '/cancel':
+        cancel(message)
+        return
     try:
         photo_id = int(message.text)
         conn = sqlite3.connect('image_database.db')
@@ -161,5 +170,10 @@ def process_show_photo(message):
         bot.send_message(message.chat.id, 'Invalid ID')
     except TypeError:
         bot.send_message(message.chat.id, 'Photo not found')
+
+@bot.message_handler(commands=['cancel'])
+def cancel(message):
+    bot.send_message(message.chat.id, 'Operation cancelled')
+    return bot.clear_step_handler(message)
 
 bot.infinity_polling()
