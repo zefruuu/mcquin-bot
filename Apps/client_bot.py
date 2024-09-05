@@ -66,7 +66,7 @@ threading.Timer(7200, add_coin_every_2_hours).start()
 
 add_coin_every_2_hours()
 
-# Команда для отображения баланса пользователя
+
 @bot.message_handler(commands=['balance'])
 def show_balance(message):
     user_id = message.from_user.id
