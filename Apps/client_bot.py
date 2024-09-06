@@ -70,7 +70,7 @@ def run_add_coin(stop_timer):
     while True:
         if not stop_timer.is_set():
             add_coin_every_2_hours(stop_timer)
-            time.sleep(100) #тайм кароч
+            time.sleep(5) #тайм кароч
         else:
             conn = sqlite3.connect('user_data.db')
             cursor = conn.cursor()
@@ -124,16 +124,15 @@ def send_random_image(message):
 # Команда /start
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.send_message(
-        message.chat.id,
-        """Оу да, Маквин готов!🚘
+    bot.send_photo(message.chat.id, open('welcomePhoto.jfif', 'rb'), caption="""Оу да, Маквин готов!🚘
 Хочешь получить шуточки про мамашу пиши - /get_image 🌼 
-Посмотреть баланс монеток - /balance
+Посмотреть баланс монеток - /balance 💸
 
 
-Заказ телграмм/дискорд бота - @zefruuu"""
-    )
-  #donat
+➡️Хотите своего телграмм/дискорд бота? - @zefruuu
+➡️Недорогая реклама - @zefruuu """)
+    
+#donat
 @bot.message_handler(commands=['donate'])
 def donat(message):
         bot.send_message(
