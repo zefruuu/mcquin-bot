@@ -1,8 +1,11 @@
 import sqlite3
 import random
+import types
+
 from telebot import TeleBot
 from Tokens import client_tok
-
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 import threading
 import time
 
@@ -60,7 +63,7 @@ def add_coin_every_2_hours(stop_timer):
                 update_user_balance(user_id, 1)
                 print(f"+ 1 social credit💳 for {user_id}")
             else:
-                print(f"долбойоб 🐖👉 {user_id} ")
+                print(f"Добавлено {user_id} ")
                 stop_timer.set()
         conn.close()
     except ValueError:
@@ -79,7 +82,7 @@ def run_add_coin(stop_timer):
             if users:
                 stop_timer.clear()
             conn.close()
-            time.sleep(5) #тайм кароч якщо чел свинка
+            time.sleep(7200) #тайм кароч якщо чел свинка
 
 stop_timer = threading.Event()
 thread = threading.Thread(target=run_add_coin, args=(stop_timer,))
@@ -97,19 +100,19 @@ def show_balance(message):
 @bot.message_handler(commands=['get_image'])
 def get_image(message):
     user_id = message.from_user.id
-
-    # Получаем баланс пользователя
     balance = get_user_balance(user_id)
 
     if balance >= 2:
-        update_user_balance(user_id, -2)  # Снимаем две монетки
-        send_random_image(message)  # Отправляем изображение
+        update_user_balance(user_id, -2)
+        send_random_image_with_buttons(message)
     else:
-        bot.send_message(message.chat.id, f"""Бесплатные шуточки про мамашу закончились, жди или пополняй баланс
+        bot.send_message(message.chat.id, f"""Бесплатные шуточки про мамашу закончились, 
+каждые 2 часа возобновляеться 1 монетка! 
+Стоимость 1 картинки - 2 монетки
 Ваш баланс: {balance} монеток💰 """)
 
-# Функция для отправки случайной картинки
-def send_random_image(message):
+
+def send_random_image_with_buttons(message):
     conn = sqlite3.connect('image_database.db')
     cursor = conn.cursor()
     cursor.execute('SELECT image FROM images ORDER BY RANDOM() LIMIT 1')
@@ -117,10 +120,33 @@ def send_random_image(message):
     conn.close()
 
     if image:
-        bot.send_photo(message.chat.id, image[0])
+        # Создаем кнопки
+        markup = InlineKeyboardMarkup()
+        next_button = InlineKeyboardButton("Следующая картинка", callback_data="next_image")
+        markup.add(next_button)
+
+
+        bot.send_photo(message.chat.id, image[0], reply_markup=markup)
     else:
         bot.send_message(message.chat.id, 'No images in the database')
 
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_inline(call):
+    user_id = call.from_user.id
+    if call.data == "next_image":
+        # Получаем текущий баланс
+        balance = get_user_balance(user_id)
+
+        # Проверяем, достаточно ли монет для получения новой картинки
+        if balance >= 2:
+            update_user_balance(user_id, -2)  # Снимаем 2 монеты
+            get_image(call.message)  # Вызываем функцию для получения картинки
+        else:
+            bot.send_message(call.message.chat.id, f"""Бесплатные шуточки про мамашу закончились, 
+каждые 2 часа возобновляеться 1 монетка! 
+Стоимость 1 картинки - 2 монетки
+Ваш баланс: {balance} монеток💰""")
 # Команда /start
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -130,7 +156,7 @@ def send_welcome(message):
 
 
 ➡️Хотите своего телграмм/дискорд бота? - @zefruuu
-➡️Недорогая реклама - @zefruuu """)
+➡️Недорогая реклама - @zefruuu """, reply_markup=markup)
     
 #donat
 @bot.message_handler(commands=['donate'])
@@ -154,9 +180,21 @@ def hellp(message):
 /get_image - получить картинку️🖼
 /balance - ваш баланс монеток👛
 /start - перезапуск бота🔄
-/help - все команды▶️"""
+/help - все команды▶️
+
+➡️Хотите своего телграмм/дискорд бота? - @zefruuu
+➡️Недорогая реклама - @zefruuu
+"""
             )
 
+#клавіатура
+markup = ReplyKeyboardMarkup(resize_keyboard=True)
+item1 = KeyboardButton("/balance 👛")
+item2 = KeyboardButton("/start 🔄")
+item3 = KeyboardButton("/help 🆘")
+item4 = KeyboardButton("/get_image 🖼")
+markup.add(item1, item2)
+markup.add(item3, item4)
 # Команда для добавления монет
 @bot.message_handler(commands=['addmoney'])
 def add_money(message):
